@@ -1,105 +1,116 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Manager</title>
+    <title>数据库管理器</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .action-buttons {
-            min-width: 120px;
-        }
-        .form-container {
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .hidden {
-            display: none;
-        }
+        .action-buttons { min-width: 180px; }
+        .form-container { background-color: #f8f9fa; border-radius: 5px; padding: 20px; margin-bottom: 20px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container py-4">
-        <h1 class="mb-4">Database Manager</h1>
-        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>数据对象管理器</h1>
+            {% if show_graph_link %}
+            <a href="/graph" class="btn btn-outline-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-diagram-3" viewBox="0 0 16 16"><path fill-rule="evenodd" d="..."></path></svg>
+                查看数据关系图谱
+            </a>
+            {% endif %}
+        </div>
         <div class="form-container">
-            <h2 id="form-title">Add New Record</h2>
+            <!-- 表单部分无变化 -->
+            <h2 id="form-title">添加新记录</h2>
             <form id="data-form">
                 <input type="hidden" id="object-id">
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="name" class="form-label">Name</label>
+                        <label for="name" class="form-label">名称</label>
                         <input type="text" class="form-control" id="name" required>
                     </div>
                     <div class="col-md-6">
-                        <label for="type" class="form-label">Type</label>
-                        <select class="form-select" id="type" required>
-                            <option value="text/plain">Text</option>
-                            <option value="image/jpeg">Image (JPEG)</option>
-                            <option value="image/png">Image (PNG)</option>
-                            <option value="application/json">JSON</option>
-                            <option value="application/pdf">PDF</option>
-                            <option value="application/vnd.ms-excel">Excel</option>
-                        </select>
+                        <label for="source" class="form-label">来源</label>
+                        <input type="text" class="form-control" id="source" placeholder="例如: official_reports">
                     </div>
                 </div>
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="tags" class="form-label">Tags (comma separated)</label>
-                        <input type="text" class="form-control" id="tags">
+                        <label for="type-input" class="form-label">类型</label>
+                        <!-- 将 <select> 改为 <input> -->
+                        <input class="form-control" list="type-options" id="type-input" name="type" placeholder="请选择或输入类型..." required>
+                        <!-- 使用 <datalist> 提供建议选项 -->
+                        <datalist id="type-options">
+                            <option value="text/plain">文本</option>
+                            <option value="image/jpeg">图像 (JPEG)</option>
+                            <option value="image/png">图像 (PNG)</option>
+                            <option value="application/json">JSON</option>
+                            <option value="application/pdf">PDF</option>
+                            <option value="application/vnd.ms-excel">Excel</option>
+                        </datalist>
                     </div>
                     <div class="col-md-6">
-                        <label for="status" class="form-label">Status</label>
+                        <label for="status" class="form-label">状态</label>
                         <select class="form-select" id="status" required>
-                            <option value="new">New</option>
-                            <option value="processing">Processing</option>
-                            <option value="classified">Classified</option>
-                            <option value="archived">Archived</option>
+                            <option value="new">new</option>
+                            <option value="processing">processing</option>
+                            <option value="classified">classified</option>
+                            <option value="archived">archived</option>
+                            <option value="error">error</option>
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="mb-3">
-                    <label for="content" class="form-label">Content Summary</label>
-                    <textarea class="form-control" id="content" rows="3"></textarea>
+                    <label for="tags" class="form-label">标签 (逗号分隔)</label>
+                    <input type="text" class="form-control" id="tags">
                 </div>
                 
                 <div class="mb-3">
-                    <label for="file" class="form-label">File</label>
-                    <input class="form-control" type="file" id="file">
+                    <label for="content" class="form-label">内容摘要</label>
+                    <textarea class="form-control" id="content" rows="2"></textarea>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="quality_score" class="form-label">Quality Score (0-1)</label>
-                    <input type="number" class="form-control" id="quality_score" min="0" max="1" step="0.01">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                         <label for="file" class="form-label">文件 (创建时必须)</label>
+                         <input class="form-control" type="file" id="file">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="quality_score" class="form-label">质量分 (0-1)</label>
+                        <input type="number" class="form-control" id="quality_score" min="0" max="1" step="0.01">
+                    </div>
                 </div>
                 
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">取消</button>
                 </div>
             </form>
         </div>
         
-        <h2 class="mb-3">Records</h2>
+        <h2 class="mb-3">记录列表</h2>
         
         <div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
+                        <th>名称</th>
+                        <th>来源</th>
+                        <th>类型</th>
+                        <th>得分</th> <!-- (已更新) 新增得分列 -->
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="data-table-body">
-                    <!-- Records will be loaded here -->
+                    <!-- 记录将在此处加载 -->
                 </tbody>
             </table>
         </div>
@@ -107,7 +118,7 @@
         <div class="d-flex justify-content-center mt-4">
             <nav>
                 <ul class="pagination" id="pagination">
-                    <!-- Pagination will be generated here -->
+                    <!-- 分页将在此处生成 -->
                 </ul>
             </nav>
         </div>
@@ -115,123 +126,92 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Base API URL
         const API_BASE_URL = '/api/data';
         
-        // DOM Elements
+        const dataTableBody = document.getElementById('data-table-body');
         const dataForm = document.getElementById('data-form');
         const formTitle = document.getElementById('form-title');
         const objectIdInput = document.getElementById('object-id');
         const cancelBtn = document.getElementById('cancel-btn');
-        const dataTableBody = document.getElementById('data-table-body');
         const paginationElement = document.getElementById('pagination');
         
-        // State variables
         let currentOffset = 0;
         const pageSize = 15;
         let totalRecords = 0;
         let currentEditId = null;
-        
-        // Initialize
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Get offset from URL if available
             const urlParams = new URLSearchParams(window.location.search);
             const offset = parseInt(urlParams.get('offset'));
             if (!isNaN(offset) && offset > 0) {
                 currentOffset = offset;
             }
             loadData();
-            
-            // Form submission handler
             dataForm.addEventListener('submit', handleFormSubmit);
-            
-            // Cancel button handler
             cancelBtn.addEventListener('click', resetForm);
         });
-        
-        // Load data from API
+
         async function loadData() {
             try {
-                // Construct proper query parameters
-                const params = new URLSearchParams({
-                    limit: pageSize,
-                    offset: currentOffset
-                });
-                
-                const url = `${API_BASE_URL}?${params.toString()}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
+                const params = new URLSearchParams({ limit: pageSize, offset: currentOffset });
+                const response = await fetch(`${API_BASE_URL}?${params.toString()}`);
+                if (!response.ok) throw new Error(`HTTP 错误! 状态: ${response.status}`);
                 const data = await response.json();
-                totalRecords = data.total_records; // Use total_records from API
+                totalRecords = data.total_records;
                 renderTable(data.data);
                 renderPaginationButtons();
             } catch (error) {
-                console.error('Error loading data:', error);
-                dataTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error loading data: ${error.message}</td></tr>`;
+                console.error('加载数据时出错:', error);
+                // (已更新) colspan 从 7 改为 8
+                dataTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">加载数据出错: ${error.message}</td></tr>`;
             }
         }
         
-        // Render table data
         function renderTable(records) {
             dataTableBody.innerHTML = '';
-            
             if (!records || records.length === 0) {
-                dataTableBody.innerHTML = '<tr><td colspan="6" class="text-center">No records found</td></tr>';
+                // (已更新) colspan 从 7 改为 8
+                dataTableBody.innerHTML = '<tr><td colspan="8" class="text-center">未找到记录</td></tr>';
                 return;
             }
             
             records.forEach(record => {
                 const row = document.createElement('tr');
+                // (已更新) 在HTML中增加了得分列的<td>
+                const score = record.quality_score !== null ? Number(record.quality_score).toFixed(3) : 'N/A';
                 row.innerHTML = `
                     <td>${record.id.substring(0, 8)}...</td>
                     <td>${record.name}</td>
+                    <td>${record.source || 'N/A'}</td>
                     <td>${record.type}</td>
+                    <td><strong>${score}</strong></td>
                     <td><span class="badge ${getStatusBadgeClass(record.status)}">${record.status}</span></td>
                     <td>${new Date(record.created_at).toLocaleString()}</td>
                     <td class="action-buttons">
-                        <button class="btn btn-sm btn-info view-btn" data-id="${record.id}">View</button>
-                        <button class="btn btn-sm btn-warning edit-btn" data-id="${record.id}">Edit</button>
-                        <button class="btn btn-sm btn-danger delete-btn" data-id="${record.id}">Delete</button>
+                        <button class="btn btn-sm btn-info view-btn" data-id="${record.id}">查看</button>
+                        <button class="btn btn-sm btn-warning edit-btn" data-id="${record.id}">编辑</button>
+                        <button class="btn btn-sm btn-danger delete-btn" data-id="${record.id}">删除</button>
                     </td>
                 `;
                 dataTableBody.appendChild(row);
             });
             
-            // Add event listeners to action buttons
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', () => viewRecord(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => prepareEditForm(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => deleteRecord(btn.dataset.id));
-            });
+            document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => viewRecord(btn.dataset.id)));
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => prepareEditForm(btn.dataset.id)));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteRecord(btn.dataset.id)));
         }
-        
-        // Render pagination buttons
+
+        // 其他JS函数(renderPaginationButtons, handleFormSubmit,等)无变化，保持原样即可
         function renderPaginationButtons() {
             paginationElement.innerHTML = '';
-            
             if (totalRecords === 0) return;
-
             const hasPrevious = currentOffset > 0;
             const hasNext = (currentOffset + pageSize) < totalRecords;
             const currentPage = Math.floor(currentOffset / pageSize) + 1;
             const totalPages = Math.ceil(totalRecords / pageSize);
-
-            // Previous button
             const prevLi = document.createElement('li');
             prevLi.classList.add('page-item');
-            if (!hasPrevious) {
-                prevLi.classList.add('disabled');
-            }
+            if (!hasPrevious) { prevLi.classList.add('disabled'); }
             prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous"><span aria-hidden="true">«</span></a>`;
             prevLi.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -241,19 +221,13 @@
                 }
             });
             paginationElement.appendChild(prevLi);
-
-            // Page number indicator
             const pageInfoLi = document.createElement('li');
             pageInfoLi.classList.add('page-item', 'disabled');
-            pageInfoLi.innerHTML = `<span class="page-link">Page ${currentPage} of ${totalPages}</span>`;
+            pageInfoLi.innerHTML = `<span class="page-link">第 ${currentPage} 页 / 共 ${totalPages} 页</span>`;
             paginationElement.appendChild(pageInfoLi);
-
-            // Next button
             const nextLi = document.createElement('li');
             nextLi.classList.add('page-item');
-            if (!hasNext) {
-                nextLi.classList.add('disabled');
-            }
+            if (!hasNext) { nextLi.classList.add('disabled'); }
             nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">»</span></a>`;
             nextLi.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -264,134 +238,96 @@
             });
             paginationElement.appendChild(nextLi);
         }
-
         function updateUrlAndLoadData() {
             const newUrl = `${window.location.pathname}?offset=${currentOffset}`;
             window.history.pushState({path: newUrl}, '', newUrl);
             loadData();
         }
-        
-        // Handle form submission
         async function handleFormSubmit(e) {
             e.preventDefault();
-            
             const formData = new FormData();
             formData.append('name', document.getElementById('name').value);
+            formData.append('source', document.getElementById('source').value);
             formData.append('type', document.getElementById('type').value);
             formData.append('tags', document.getElementById('tags').value);
             formData.append('status', document.getElementById('status').value);
             formData.append('content', document.getElementById('content').value);
-            
             const qualityScore = document.getElementById('quality_score').value;
             if (qualityScore) formData.append('quality_score', qualityScore);
-            
             const fileInput = document.getElementById('file');
-            if (fileInput.files[0]) {
-                formData.append('file', fileInput.files[0]);
-            }
-            
+            if (fileInput.files[0]) { formData.append('file', fileInput.files[0]); }
             try {
-                let method = 'POST';
-                let url = API_BASE_URL;
-                
-                if (currentEditId) {
-                    method = 'PUT';
-                    url = `${API_BASE_URL}/${currentEditId}`;
+                let method = currentEditId ? 'PUT' : 'POST';
+                let url = currentEditId ? `${API_BASE_URL}/${currentEditId}` : API_BASE_URL;
+                if (method === 'POST' && !fileInput.files[0]) {
+                    alert('创建新记录时必须上传文件。');
+                    return;
                 }
-                
-                const response = await fetch(url, {
-                    method: method,
-                    body: formData
-                });
-                
+                const response = await fetch(url, { method: method, body: formData });
                 const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Operation failed');
-                }
-                
-                alert(currentEditId ? 'Record updated successfully!' : 'Record created successfully!');
+                if (!response.ok) throw new Error(result.error || '操作失败');
+                alert(currentEditId ? '记录更新成功！' : '记录创建成功！');
                 resetForm();
                 loadData();
             } catch (error) {
-                console.error('Error saving record:', error);
-                alert('Error saving record: ' + error.message);
+                console.error('保存记录时出错:', error);
+                alert('保存记录出错: ' + error.message);
             }
         }
-        
-        // Prepare edit form
         async function prepareEditForm(id) {
             try {
                 const response = await fetch(`${API_BASE_URL}/${id}`);
                 const record = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(record.error || 'Failed to load record');
-                }
-                
-                // Fill form fields
+                if (!response.ok) throw new Error(record.error || '加载记录失败');
                 objectIdInput.value = id;
                 document.getElementById('name').value = record.name;
+                document.getElementById('source').value = record.source || '';
                 document.getElementById('type').value = record.type;
                 document.getElementById('tags').value = record.tags ? record.tags.join(', ') : '';
                 document.getElementById('status').value = record.status;
                 document.getElementById('content').value = record.content || '';
                 document.getElementById('quality_score').value = record.quality_score || '';
-                
-                formTitle.textContent = 'Edit Record';
+                formTitle.textContent = '编辑记录';
                 currentEditId = id;
-                window.scrollTo(0, 0); // Scroll to top to see the form
+                window.scrollTo(0, 0);
             } catch (error) {
-                console.error('Error loading record:', error);
-                alert('Error loading record: ' + error.message);
+                console.error('加载记录以供编辑时出错:', error);
+                alert('加载记录出错: ' + error.message);
             }
         }
-        
-        // View record details
-        function viewRecord(id) {
-            window.open(`/api/data/${id}`, '_blank');
-        }
-        
-        // Delete record
+        function viewRecord(id) { window.open(`${API_BASE_URL}/${id}`, '_blank'); }
         async function deleteRecord(id) {
-            if (!confirm('Are you sure you want to delete this record?')) return;
-            
+            if (!confirm('确定要删除此记录及其关联文件吗？')) return;
             try {
-                const response = await fetch(`${API_BASE_URL}/${id}`, {
-                    method: 'DELETE'
-                });
-                
+                const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
                 const result = await response.json();
-                
                 if (!response.ok) {
-                    throw new Error(result.error || 'Deletion failed');
+                    throw new Error(result.error || `服务器返回错误，状态码: ${response.status}`);
                 }
-                
-                alert('Record deleted successfully!');
+                alert(result.message || '记录已成功删除！');
                 loadData();
             } catch (error) {
-                console.error('Error deleting record:', error);
-                alert('Error deleting record: ' + error.message);
+                console.error('删除记录时出错:', error);
+                if (error instanceof SyntaxError) {
+                     alert('删除记录出错: 服务器返回了无效的响应格式，请检查服务器日志。');
+                } else {
+                     alert('删除记录出错: ' + error.message);
+                }
             }
         }
-        
-        // Reset form to add new record
         function resetForm() {
             dataForm.reset();
             objectIdInput.value = '';
-            formTitle.textContent = 'Add New Record';
+            formTitle.textContent = '添加新记录';
             currentEditId = null;
         }
-        
-        // Get badge class based on status
         function getStatusBadgeClass(status) {
-            if (!status) return 'bg-dark'; // Handle empty status
-            
             switch (status) {
                 case 'new': return 'bg-primary';
-                case 'processing': return 'bg-info';
+                case 'processing': return 'bg-info text-dark';
                 case 'classified': return 'bg-success';
                 case 'archived': return 'bg-secondary';
+                case 'error': return 'bg-danger';
                 default: return 'bg-dark';
             }
         }
