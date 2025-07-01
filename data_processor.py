@@ -12,7 +12,7 @@ from datetime import datetime
 
 # --- 配置 ---
 DASHSCOPE_API_KEY_ENV = "DASHSCOPE_API_KEY"
-DASHSCOPE_API_KEY_FALLBACK = os.getenv(DASHSCOPE_API_KEY_ENV,'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx') 
+DASHSCOPE_API_KEY_FALLBACK = os.getenv(DASHSCOPE_API_KEY_ENV,'sk-xxxxxxxxxxxxxxxxxxxxxxxxxx') 
 
 client = OpenAI(
     api_key=DASHSCOPE_API_KEY_FALLBACK,
@@ -21,7 +21,7 @@ client = OpenAI(
 
 # 模型名称
 QWEN_TEXT_MODEL = "qwen2-72b-instruct"
-QWEN_VL_MODEL = "qwen-vl-plus" 
+QWEN_VL_MODEL = "qwen-vl-plus"
 
 # 新增：来源质量权重
 SOURCE_QUALITY_WEIGHTS = {
