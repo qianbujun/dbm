@@ -13,7 +13,6 @@ INPUT_MONITOR_DIR = 'input_data'
 
 # 自定义MIME类型映射
 FILE_TYPE_MAP = {
-    # ... (保持不变)
     '.txt': 'text/plain', '.md': 'text/markdown',
     '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
     '.png': 'image/png', '.gif': 'image/gif', '.bmp': 'image/bmp', '.svg': 'image/svg+xml',
@@ -279,16 +278,16 @@ if __name__ == '__main__':
         os.makedirs(sample_source_dir)
         print(f"已创建输入源目录: {sample_source_dir}")
 
-    sample_files_info = {
-        "test_list.json": [{"id": 1, "val": "苹果"}, {"id": 2, "val": "香蕉"}],
-        "sample_notes.txt": "这是一份关于市场分析的笔记。"
-    }
-    for fname, content in sample_files_info.items():
-        fpath = os.path.join(sample_source_dir, fname)
-        with open(fpath, 'w', encoding='utf-8') as f:
-            if fname.endswith(".json"): json.dump(content, f, indent=2, ensure_ascii=False)
-            else: f.write(content)
-        print(f"已创建示例文件: {fpath}")
+    # sample_files_info = {
+    #     "test_list.json": [{"id": 1, "val": "苹果"}, {"id": 2, "val": "香蕉"}],
+    #     "sample_notes.txt": "这是一份关于市场分析的笔记。"
+    # }
+    # for fname, content in sample_files_info.items():
+    #     fpath = os.path.join(sample_source_dir, fname)
+    #     with open(fpath, 'w', encoding='utf-8') as f:
+    #         if fname.endswith(".json"): json.dump(content, f, indent=2, ensure_ascii=False)
+    #         else: f.write(content)
+    #     print(f"已创建示例文件: {fpath}")
     
     print(f"启动采集器进行短暂测试 (约15秒)...")
     ingest_new_data(INPUT_MONITOR_DIR, FILE_STORAGE_DIR) # 立即运行一次

@@ -136,7 +136,7 @@
         const paginationElement = document.getElementById('pagination');
         
         let currentOffset = 0;
-        const pageSize = 15;
+        const pageSize = 100;
         let totalRecords = 0;
         let currentEditId = null;
 
@@ -243,58 +243,116 @@
             window.history.pushState({path: newUrl}, '', newUrl);
             loadData();
         }
+
         async function handleFormSubmit(e) {
             e.preventDefault();
             const formData = new FormData();
+
+            // 从表单中获取所有数据
             formData.append('name', document.getElementById('name').value);
             formData.append('source', document.getElementById('source').value);
-            formData.append('type', document.getElementById('type').value);
+            // --- (核心修复) ---
+            // 使用正确的ID 'type-input' 来获取类型的值
+            formData.append('type', document.getElementById('type-input').value); 
+            // --- (修复结束) ---
             formData.append('tags', document.getElementById('tags').value);
             formData.append('status', document.getElementById('status').value);
             formData.append('content', document.getElementById('content').value);
+            
             const qualityScore = document.getElementById('quality_score').value;
-            if (qualityScore) formData.append('quality_score', qualityScore);
+            if (qualityScore) {
+                formData.append('quality_score', qualityScore);
+            }
+            
             const fileInput = document.getElementById('file');
-            if (fileInput.files[0]) { formData.append('file', fileInput.files[0]); }
+            if (fileInput.files[0]) {
+                formData.append('file', fileInput.files[0]);
+            }
+
             try {
-                let method = currentEditId ? 'PUT' : 'POST';
-                let url = currentEditId ? `${API_BASE_URL}/${currentEditId}` : API_BASE_URL;
+                const method = currentEditId ? 'PUT' : 'POST';
+                const url = currentEditId ? `${API_BASE_URL}/${currentEditId}` : API_BASE_URL;
+
+                // 在创建(POST)模式下，文件是必需的
                 if (method === 'POST' && !fileInput.files[0]) {
                     alert('创建新记录时必须上传文件。');
-                    return;
+                    return; // 阻止提交
                 }
-                const response = await fetch(url, { method: method, body: formData });
+
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData  // FormData对象不需要手动设置Content-Type
+                });
+                
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.error || '操作失败');
+                
+                if (!response.ok) {
+                    // 如果API返回了错误信息，就抛出它
+                    throw new Error(result.error || '操作失败，服务器未提供详细信息。');
+                }
+                
                 alert(currentEditId ? '记录更新成功！' : '记录创建成功！');
                 resetForm();
-                loadData();
+                loadData(); // 重新加载数据以显示更新
+
             } catch (error) {
                 console.error('保存记录时出错:', error);
                 alert('保存记录出错: ' + error.message);
             }
         }
+
         async function prepareEditForm(id) {
             try {
                 const response = await fetch(`${API_BASE_URL}/${id}`);
+                if (!response.ok) {
+                    throw new Error(`加载记录失败，服务器状态码: ${response.status}`);
+                }
                 const record = await response.json();
-                if (!response.ok) throw new Error(record.error || '加载记录失败');
-                objectIdInput.value = id;
-                document.getElementById('name').value = record.name;
+                if (record.error) {
+                    throw new Error(record.error);
+                }
+
+                // --- (核心修复) 对每个元素进行防御性赋值 ---
+
+                // 这些是正确的
+                document.getElementById('object-id').value = id;
+                document.getElementById('name').value = record.name || '';
                 document.getElementById('source').value = record.source || '';
-                document.getElementById('type').value = record.type;
                 document.getElementById('tags').value = record.tags ? record.tags.join(', ') : '';
-                document.getElementById('status').value = record.status;
-                document.getElementById('content').value = record.content || '';
-                document.getElementById('quality_score').value = record.quality_score || '';
+                document.getElementById('status').value = record.status || '';
+                document.getElementById('content').value = record.content_summary || record.content || ''; // 检查两个可能的字段名
+                
+                // --- (这行是需要修改的) ---
+                // 原来的错误代码:
+                // const typeElem = document.getElementById('type');
+                // if (typeElem) typeElem.value = record.type || '';
+                
+                // 修正后的代码:
+                const typeInputElem = document.getElementById('type-input');
+                if (typeInputElem) {
+                    typeInputElem.value = record.type || '';
+                }
+                
+                const scoreElem = document.getElementById('quality_score');
+                if (scoreElem) {
+                    scoreElem.value = (record.quality_score !== null && record.quality_score !== undefined) 
+                                    ? record.quality_score 
+                                    : '';
+                }
+
+                // 更新表单标题并滚动到顶部
                 formTitle.textContent = '编辑记录';
                 currentEditId = id;
                 window.scrollTo(0, 0);
+
             } catch (error) {
                 console.error('加载记录以供编辑时出错:', error);
                 alert('加载记录出错: ' + error.message);
             }
         }
+
+
+
         function viewRecord(id) { window.open(`${API_BASE_URL}/${id}`, '_blank'); }
         async function deleteRecord(id) {
             if (!confirm('确定要删除此记录及其关联文件吗？')) return;

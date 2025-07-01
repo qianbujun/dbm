@@ -189,25 +189,48 @@ def get_data_objects(status: str = None, file_type: str = None,
         params.append(f"%{name_like}%")
 
     # (核心修复) 使用子查询和HAVING COUNT来强制执行AND逻辑
+    # 在 db_manager.py 中替换原有的 if tags ... 块
     if tags and isinstance(tags, list) and len(tags) > 0:
-        # 这个子查询会找到那些与所有提供标签都关联的对象ID
-        subquery_conditions = " OR ".join(["t.name LIKE ?"] * len(tags))
+        # 核心修复：为每个 LIKE 条件创建一个 CASE 语句
+        # e.g., "CASE WHEN t.name LIKE ? THEN 1 ELSE 0 END"
+        # 我们用不同的整数来代表不同的匹配条件
+        case_statements = []
+        for i, tag in enumerate(tags):
+            case_statements.append(f"CASE WHEN t.name LIKE ? THEN {i+1} ELSE NULL END")
+        
+        # 将所有 CASE 语句合并，用于后续的 COUNT(DISTINCT ...)
+        # e.g., "COUNT(DISTINCT CASE WHEN ... END)"
+        count_expression = f"COUNT(DISTINCT ({' + '.join(case_statements).replace('+','').replace('CASE','COALESCE(CASE') + ')'*len(case_statements)}))"
+
+        # 更简单、更健壮的 SQLite 写法是使用 DISTINCT 对一个组合表达式求值
+        # 我们要统计匹配上了多少个输入模式（pattern）
+        # e.g., COUNT(DISTINCT CASE WHEN t.name LIKE '%航天%' THEN 'pattern1' WHEN t.name LIKE '%政策%' THEN 'pattern2' END)
+        
+        when_clauses = []
+        for i, _ in enumerate(tags):
+            # 为每个输入标签创建一个唯一的标识符 'pattern_i'
+            when_clauses.append(f"WHEN t.name LIKE ? THEN 'pattern_{i}'")
+        
+        count_logic = f"COUNT(DISTINCT (CASE {' '.join(when_clauses)} END))"
+        
         subquery = f"""
             do.id IN (
                 SELECT dot.data_object_id
                 FROM data_object_tags dot
                 JOIN tags t ON dot.tag_id = t.id
-                WHERE {subquery_conditions}
                 GROUP BY dot.data_object_id
-                HAVING COUNT(DISTINCT t.name) = ?
+                HAVING {count_logic} = ?  -- <== 使用新的 COUNT 逻辑
             )
         """
         conditions.append(subquery)
-        # 将每个标签的LIKE参数添加到主参数列表中
+        
+        # 准备参数
+        # 首先是 WHEN 子句中的 LIKE 参数
         for tag in tags:
             params.append(f"%{tag}%")
-        # 最后，HAVING COUNT的参数是标签的数量
+        # 然后是 HAVING 子句中的 COUNT 数量
         params.append(len(tags))
+
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
