@@ -181,8 +181,6 @@ def update_data_object_api(object_id_str: str):
             return jsonify({"error": "无效的quality_score格式。"}), 400
     if 'status' in data: updates['status'] = data['status']
     
-    # ... (文件处理逻辑保持不变)
-    
     if not updates and not file:
         return jsonify({"error": "没有提供更新数据"}), 400
 

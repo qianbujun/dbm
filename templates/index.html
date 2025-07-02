@@ -251,10 +251,8 @@
             // 从表单中获取所有数据
             formData.append('name', document.getElementById('name').value);
             formData.append('source', document.getElementById('source').value);
-            // --- (核心修复) ---
             // 使用正确的ID 'type-input' 来获取类型的值
             formData.append('type', document.getElementById('type-input').value); 
-            // --- (修复结束) ---
             formData.append('tags', document.getElementById('tags').value);
             formData.append('status', document.getElementById('status').value);
             formData.append('content', document.getElementById('content').value);
@@ -312,9 +310,8 @@
                     throw new Error(record.error);
                 }
 
-                // --- (核心修复) 对每个元素进行防御性赋值 ---
+                //对每个元素进行防御性赋值 ---
 
-                // 这些是正确的
                 document.getElementById('object-id').value = id;
                 document.getElementById('name').value = record.name || '';
                 document.getElementById('source').value = record.source || '';
@@ -322,12 +319,7 @@
                 document.getElementById('status').value = record.status || '';
                 document.getElementById('content').value = record.content_summary || record.content || ''; // 检查两个可能的字段名
                 
-                // --- (这行是需要修改的) ---
-                // 原来的错误代码:
-                // const typeElem = document.getElementById('type');
-                // if (typeElem) typeElem.value = record.type || '';
                 
-                // 修正后的代码:
                 const typeInputElem = document.getElementById('type-input');
                 if (typeInputElem) {
                     typeInputElem.value = record.type || '';
