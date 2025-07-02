@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据关系图谱</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        #main-graph {
+            width: 100%;
+            height: 90vh; /* 使图表高度接近视窗高度 */
+            min-height: 700px;
+        }
+        .header-section {
+            padding-top: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="header-section text-center">
+            <h1 class="display-5">数据关系图谱</h1>
+            <p class="lead text-muted">基于标签的共现关系构建。节点大小代表标签频率，边粗细代表关系强度。</p>
+            <a href="/" class="btn btn-outline-secondary mt-2">返回数据管理器</a>
+        </div>
+        
+        <!-- 图表容器 -->
+        <div id="main-graph"></div>
+    </div>
+
+    <script type="text/javascript">
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始化ECharts实例
+            var myChart = echarts.init(document.getElementById('main-graph'));
+
+            // 显示加载动画
+            myChart.showLoading();
+
+            // 通过API获取图谱数据
+            fetch('/api/tags/graph')
+                .then(response => response.json())
+                .then(function (graphData) {
+                    // 隐藏加载动画
+                    myChart.hideLoading();
+
+                    if (graphData.error) {
+                        alert('加载图谱数据失败: ' + graphData.error);
+                        return;
+                    }
+
+                    // 设置图表配置项
+                    var option = {
+                        tooltip: { // 提示框，鼠标悬浮时显示
+                            formatter: function (params) {
+                                if (params.dataType === 'node') {
+                                    return `<strong>标签: ${params.data.name}</strong><br>出现次数: ${params.data.value}`;
+                                }
+                                if (params.dataType === 'edge') {
+                                    return `<strong>关系: ${params.data.source} - ${params.data.target}</strong><br>共现强度: ${params.data.value}`;
+                                }
+                            }
+                        },
+                        legend: [{ // 图例，可以用来筛选类别，这里我们只有一个类别
+                            data: (graphData.nodes || []).map(a => a.name)
+                        }],
+                        series: [
+                            {
+                                type: 'graph',
+                                layout: 'force', // 使用力引导布局
+                                data: graphData.nodes, // 节点数据
+                                links: graphData.links, // 边数据
+                                roam: true, // 开启鼠标缩放和漫游
+                                label: {
+                                    show: true, // 显示标签
+                                    position: 'right',
+                                    formatter: '{b}' // 格式化为显示节点名称
+                                },
+                                force: {
+                                    repulsion: 100, // 节点间的斥力因子
+                                    edgeLength: [50, 100], // 边的两个端点之间的距离
+                                    gravity: 0.1 // 节点受到的向中心的引力
+                                },
+                                emphasis: { // 高亮状态
+                                    focus: 'adjacency',
+                                    lineStyle: {
+                                        width: 10
+                                    }
+                                },
+                                lineStyle: {
+                                    color: 'source', // 边跟随源节点的颜色
+                                    curveness: 0.3, // 边的曲度
+                                    width: 2 // 基础宽度
+                                }
+                            }
+                        ]
+                    };
+
+                    // 应用配置
+                    myChart.setOption(option);
+                })
+                .catch(error => {
+                    myChart.hideLoading();
+                    console.error('获取图谱数据时发生网络错误:', error);
+                    alert('网络错误，无法加载图谱数据。');
+                });
+
+            // 窗口大小改变时，重置图表尺寸
+            window.addEventListener('resize', function () {
+                myChart.resize();
+            });
+        });
+    </script>
+</body>
+</html>

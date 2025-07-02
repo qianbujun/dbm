@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-bs-theme="light">
+<html lang="zh-CN" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据关系图谱</title>
-    <link href="templates\bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 引入 ECharts -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
@@ -13,9 +13,8 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            /* 修改(2): 适配浅色主题的背景和文字颜色 */
-            background-color: #ffffff; /* 白色背景 */
-            color: #212529; /* 深色文字，Bootstrap 默认文字颜色 */
+            background-color: #1a1a1a; /* 更深的背景色 */
+            color: #e0e0e0;
             overflow: hidden; /* 防止滚动条出现 */
         }
         .container-fluid {
@@ -26,10 +25,9 @@
         .header-section {
             padding: 1.5rem;
             text-align: center;
-            flex-shrink: 0; 
-            /* 修改(3): 适配浅色主题的头部背景和边框 */
-            background-color: #f8f9fa; /* Bootstrap 浅灰色背景 */
-            border-bottom: 1px solid #dee2e6; /* Bootstrap 浅色边框 */
+            flex-shrink: 0; /* 防止头部在flex布局中被压缩 */
+            background-color: rgba(26, 26, 26, 0.8);
+            border-bottom: 1px solid #333;
         }
         #main-graph {
             width: 100%;
@@ -37,8 +35,7 @@
         }
         .color-legend-info {
             font-size: 0.85rem;
-            /* 修改(4): 使用 Bootstrap 的 text-muted 类颜色，确保一致性 */
-            color: #6c757d; 
+            color: #888;
             margin-top: 1rem;
         }
     </style>
@@ -47,7 +44,6 @@
     <div class="container-fluid">
         <div class="header-section">
             <h1 class="display-5">数据关系图谱</h1>
-            <!-- text-muted 类在 light 主题下会自动显示为深灰色 -->
             <p class="lead text-muted">基于标签的共现关系构建。节点大小代表标签频率，颜色代表所属业务领域。</p>
             <div class="color-legend-info">
                 提示：您可以点击图例中的领域名称来筛选或高亮显示特定类别的节点。
@@ -64,19 +60,20 @@
             var myChart = echarts.init(document.getElementById('main-graph'));
 
             // --- 核心修改：定义领域类别和颜色 ---
-            const COLOR_PALETTE = [ // 这套颜色在浅色背景下同样适用且美观
+            const COLOR_PALETTE = [ // 一套精心挑选的、悦目的颜色
                 '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
                 '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'
             ];
-            const DEFAULT_COLOR = '#aaaaaa'; // 未分类的默认颜色调整为稍亮的灰色
+            const DEFAULT_COLOR = '#888888'; // 未分类的默认颜色
 
             const CATEGORIES = {
+                // 您可以在这里自由添加、修改或删除领域及其关键词
                 '科技 & 创新': ['科技', '技术', 'ai', '智能', '芯片', '航天', '卫星', '研发', '创新', '模型', '数据'],
                 '金融 & 经济': ['金融', '经济', '股票', '投资', '银行', '保险', '资产', '财务', '市场', '宏观'],
                 '政策 & 法规': ['政策', '法规', '监管', '政府', '标准', '合规', '规划', '管理办法'],
                 '商业 & 市场': ['商业', '市场', '企业', '公司', '产业', '行业', '报告', '分析', '项目', '用户'],
                 '社会 & 文化': ['社会', '文化', '教育', '医疗', '民生', '历史', '艺术'],
-                '其他领域': []
+                '其他领域': [] // 这是一个兜底的分类
             };
 
             function getNodeCategory(nodeName) {
@@ -102,7 +99,8 @@
                         alert('加载图谱数据失败: ' + graphData.error);
                         return;
                     }
-                    
+
+                    // --- 核心修改：为节点分配类别 ---
                     const categoryNames = Object.keys(CATEGORIES);
                     const echartsCategories = categoryNames.map(name => ({ name: name }));
 
@@ -112,7 +110,7 @@
                     }); 
 
                     var option = {
-                        color: COLOR_PALETTE,
+                        color: COLOR_PALETTE, // 应用我们的新色板
                         tooltip: {
                             formatter: function (params) {
                                 if (params.dataType === 'node') {
@@ -125,9 +123,8 @@
                             }
                         },
                         legend: [{
-                            data: echartsCategories,
-                            /* 修改(5): 图例文字颜色改为深色 */
-                            textStyle: { color: '#333333' },
+                            data: echartsCategories, // 使用我们的类别作为图例
+                            textStyle: { color: '#ccc' },
                             icon: 'circle'
                         }],
                         series: [{
@@ -135,21 +132,21 @@
                             layout: 'force',
                             data: graphData.nodes,
                             links: graphData.links,
-                            categories: echartsCategories,
+                            categories: echartsCategories, // 告诉ECharts我们的类别定义
                             roam: true,
                             label: {
                                 show: true,
                                 position: 'right',
                                 formatter: '{b}',
+                                // (优化) 只为较大的节点显示标签，避免混乱
                                 textStyle: {
                                     fontSize: 12,
-                                    /* 修改(6): 节点标签文字颜色改为深灰色，确保清晰 */
-                                    color: '#555555'
+                                    color: '#eee'
                                 },
                                 minMargin: 5
                             },
                             force: {
-                                repulsion: 150,
+                                repulsion: 150, // 增大斥力，让节点更分散
                                 edgeLength: [60, 120],
                                 gravity: 0.1,
                                 friction: 0.6

@@ -16,7 +16,7 @@ SYSTEM_TAG_STOP_LIST = [
         'gif', 'bmp', 'svg', 'zip', 'gz', 'tar',
         'text_llm_failed', 'json_llm_failed', 'image_llm_failed', 'image_base64_error',
         'processing_error', 'file_not_found_error', 'json_decode_error', 'invalid_json',
-        'needs_review']
+        'needs_review','object list','中文文本','chinese text',]
 
 def init_db():
     """

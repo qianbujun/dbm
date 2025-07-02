@@ -26,8 +26,8 @@ def get_tag_graph_api():
     """(新增) 提供标签关系图谱的数据API。"""
     try:
         # 从请求参数获取阈值，提供默认值
-        min_freq = int(request.args.get('min_freq', 2))
-        min_strength = int(request.args.get('min_strength', 1))
+        min_freq = int(request.args.get('min_freq', 6))
+        min_strength = int(request.args.get('min_strength', 3))
         
         graph_data = get_tag_graph_data(min_frequency=min_freq, min_link_strength=min_strength)
         return jsonify(graph_data)
